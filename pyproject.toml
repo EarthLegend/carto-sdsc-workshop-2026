@@ -1,0 +1,16 @@
+[project]
+name = "lgnd-geo-agent-demo"
+version = "0.1.0"
+description = "The October 2026 LGND demo, rebuilt on the LGND Geo agent SDK"
+requires-python = ">=3.13"
+dependencies = [
+    "lgnd-geo-sdk[pydantic-ai]",
+    "pydantic-ai-slim[anthropic]",
+    "folium",
+    "ipywidgets",
+    "notebook",
+    "ipykernel",
+    "ipyleaflet>=0.20.0",
+    "mistune>=3.3.4",
+    "pandas>=3.0.6",
+]

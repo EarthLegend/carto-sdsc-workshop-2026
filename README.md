@@ -1,0 +1,51 @@
+# Large Earth Observation Models in Action
+
+Workshop notebook: Spatial Data Science Conference, New York, October 20, 2026. Noam Rosenthal, LGND.
+
+LGND Geo is an index of geospatial embeddings over NAIP and Sentinel-2 imagery, served as a set of
+tools over MCP at `https://geo.lgnd.ai/mcp`. Any MCP client can connect to it, and
+[`lgnd-geo-sdk`](https://github.com/EarthLegend/lgnd-geo-sdk) handles sign-in and the connection
+from Python. The notebook works one example, new housing on former farmland across the US:
+
+1. **Connect**
+2. **Scan the country** for a feature of interest, and verify the matches against the imagery
+3. **Change detection**: where it happened, when, and from what
+4. **Export** to CARTO, your warehouse, or a desktop GIS
+5. **Hand the workflow to an LLM agent** (Pydantic AI): run it, watch it work, add instructions, continue a conversation
+6. **An application**: a chat panel beside a live map
+
+Files: `LGND_Geo_Agent_Demo.ipynb` (the notebook), `geo_show.py` (map, tool-description and
+streaming helpers), `geo_demo.py` (the application in section 6: ipywidgets
+and ipyleaflet, no server), `assets/` (the logo).
+
+## What you need
+
+- An **LGND account**. The first tool call opens your browser to sign in; tokens are kept in
+  `~/.config/lgnd_geo_sdk/tokens`, so you sign in once.
+- An **Anthropic API key** exported as `ANTHROPIC_API_KEY`. The setup cell asks for it if it is
+  missing.
+- **[uv](https://docs.astral.sh/uv/)**. The SDK needs Python 3.13, which uv fetches.
+
+Run it on your own computer. The browser sign-in has to reach the kernel, so hosted runtimes such
+as Colab do not work.
+
+## Run it
+
+With [uv](https://docs.astral.sh/uv/):
+
+```bash
+uv sync
+uv run python -m ipykernel install --user --name lgnd-geo-demo --display-name "LGND Geo demo"
+export ANTHROPIC_API_KEY=sk-ant-...
+uv run jupyter notebook LGND_Geo_Agent_Demo.ipynb
+```
+
+The notebook opens on the `LGND Geo demo` kernel. Run it top to bottom. Sections 1 to 4 need only
+the LGND sign-in; sections 5 and 6 need `ANTHROPIC_API_KEY`.
+
+## Environment variables
+
+| Variable | Description |
+|---|---|
+| `ANTHROPIC_API_KEY` | Your Anthropic API key, for the agent's model |
+| `LGND_GEO_MCP_URL` | Optional: another LGND Geo MCP server than `https://geo.lgnd.ai/mcp` |

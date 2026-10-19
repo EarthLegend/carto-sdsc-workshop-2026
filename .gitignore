@@ -1,0 +1,6 @@
+.env
+.venv/
+.ipynb_checkpoints/
+__pycache__/
+subdivisions_under_construction.geojson
+farmland_to_housing.csv
