@@ -25,8 +25,9 @@ and ipyleaflet, no server), `assets/` (the logo).
 - An **LGND Geo API key**. Sign up at the [developer portal](https://geo.lgnd.ai/portal), click
   **Create API key**, and export it as `LGND_GEO_API_KEY`. The first cell asks for it if it is
   not set.
-- An **Anthropic API key** exported as `ANTHROPIC_API_KEY`, for sections 5 and 6. The first agent
-  cell asks for it if it is missing.
+- An **Anthropic API key** exported as `ANTHROPIC_API_KEY`, for sections 5 and 6. Workshop
+  attendees can get one at [https://bit.ly/4ia4Zew](https://bit.ly/4ia4Zew). The first agent cell
+  asks for it if it is missing.
 - **[uv](https://docs.astral.sh/uv/)**. The SDK needs Python 3.13, which uv fetches.
 
 ## Run it
