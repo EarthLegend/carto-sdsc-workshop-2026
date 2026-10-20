@@ -1369,7 +1369,7 @@ requires-dist = [
     { name = "ipykernel" },
     { name = "ipyleaflet", specifier = ">=0.20.0" },
     { name = "ipywidgets" },
-    { name = "lgnd-geo-sdk", extras = ["pydantic-ai"] },
+    { name = "lgnd-geo-sdk", extras = ["pydantic-ai"], specifier = "==0.3.0" },
     { name = "mistune", specifier = ">=3.3.4" },
     { name = "notebook" },
     { name = "pandas", specifier = ">=3.0.6" },
@@ -1378,14 +1378,15 @@ requires-dist = [
 
 [[package]]
 name = "lgnd-geo-sdk"
-version = "0.1.0"
+version = "0.3.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "fastmcp-slim", extra = ["client"] },
+    { name = "tenacity" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/12/e4/44377ab18195b24694d2494645dc24242683b49ddf34375039edd9fa4655/lgnd_geo_sdk-0.1.0.tar.gz", hash = "sha256:e6ac9a9888171ca4823e04194003be61ef02999f3238d9336b784e6e002fe8b1", size = 8675, upload-time = "2026-10-08T20:39:46.229Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/72/e3/09885b68b7fbf2888796b2fd734ff75e65974bb64ac65ad3c7ce0b54733b/lgnd_geo_sdk-0.3.0.tar.gz", hash = "sha256:8967f7b8145e0421a9035b46f42ff9724ab0052291fba2d9e8e409920bb4c242", size = 12626, upload-time = "2026-10-20T03:50:23.102Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/02/ab/9fc6cc000c7d3efde0c1bfd6b1e4df3972f530f77d6fef481024ff47aec3/lgnd_geo_sdk-0.1.0-py3-none-any.whl", hash = "sha256:709e8e71f99f2303b3319ac463d83d0c1b833f833455a6d083ca0712c8c83a2b", size = 9731, upload-time = "2026-10-08T20:39:45.298Z" },
+    { url = "https://files.pythonhosted.org/packages/58/b0/1438e64d25ee4edc3babb1bdc6a6794c9e9eeb7378e9ff5a0dcd22850bba/lgnd_geo_sdk-0.3.0-py3-none-any.whl", hash = "sha256:cffbf053b910bd8edb94751e1e58540ca38ed913ac98e4ff259e91b0aec2439a", size = 13765, upload-time = "2026-10-20T03:50:22.014Z" },
 ]
 
 [package.optional-dependencies]
@@ -2552,6 +2553,15 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/ad/eb/4e197bf26b023abafc5e9043ec8710d7de0fcb032d0969045236d72aa0b1/starlette-1.9.0.tar.gz", hash = "sha256:3d931de246ed870e35ce605974440816ef895e592f255d1396cfdf191d4c4318", size = 2732466, upload-time = "2026-10-18T15:50:33.189Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/f3/93/181df62699d9b5aca1d87e5cfda131dac87e3cdaebf668662f7206ca3470/starlette-1.9.0-py3-none-any.whl", hash = "sha256:fd3f159936e882d06c1108f84688f7cda2cf85fc6a592a50edbd175e882c2ddc", size = 80335, upload-time = "2026-10-18T15:50:31.526Z" },
+]
+
+[[package]]
+name = "tenacity"
+version = "9.2.1"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/82/9e/497c1c8ebe5a5b5d1d4a7511aea22c0bb1a97e3170d98abdef0e1b34265a/tenacity-9.2.1.tar.gz", hash = "sha256:a606b5c808d0cded4a359d5b9932d867ff2a6a6b64d37350260fd01bbdf83839", size = 58261, upload-time = "2026-10-07T12:13:01.633Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/d6/26/1ff2b0721ac66a3ec5b1402b333110b352ab0a8724052ac279a7b82d40c4/tenacity-9.2.1-py3-none-any.whl", hash = "sha256:9e56f17539296baab7beabb08b92f6ee3d7be92d8be72d763360677c2ad6580e", size = 32310, upload-time = "2026-10-07T12:13:00.102Z" },
 ]
 
 [[package]]

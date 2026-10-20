@@ -20,14 +20,12 @@ and ipyleaflet, no server), `assets/` (the logo).
 
 ## What you need
 
-- An **LGND account**. The first tool call opens your browser to sign in; tokens are kept in
-  `~/.config/lgnd_geo_sdk/tokens`, so you sign in once.
-- An **Anthropic API key** exported as `ANTHROPIC_API_KEY`. The setup cell asks for it if it is
-  missing.
+- An **LGND Geo API key**. Sign up at the [developer portal](https://geo.lgnd.ai/portal), click
+  **Create API key**, and export it as `LGND_GEO_API_KEY`. The first cell asks for it if it is
+  not set.
+- An **Anthropic API key** exported as `ANTHROPIC_API_KEY`, for sections 5 and 6. The first agent
+  cell asks for it if it is missing.
 - **[uv](https://docs.astral.sh/uv/)**. The SDK needs Python 3.13, which uv fetches.
-
-Run it on your own computer. The browser sign-in has to reach the kernel, so hosted runtimes such
-as Colab do not work.
 
 ## Run it
 
@@ -36,16 +34,18 @@ With [uv](https://docs.astral.sh/uv/):
 ```bash
 uv sync
 uv run python -m ipykernel install --user --name lgnd-geo-demo --display-name "LGND Geo demo"
+export LGND_GEO_API_KEY=...      # from https://geo.lgnd.ai/portal
 export ANTHROPIC_API_KEY=sk-ant-...
 uv run jupyter notebook LGND_Geo_Agent_Demo.ipynb
 ```
 
 The notebook opens on the `LGND Geo demo` kernel. Run it top to bottom. Sections 1 to 4 need only
-the LGND sign-in; sections 5 and 6 need `ANTHROPIC_API_KEY`.
+`LGND_GEO_API_KEY`; sections 5 and 6 also need `ANTHROPIC_API_KEY`.
 
 ## Environment variables
 
 | Variable | Description |
 |---|---|
-| `ANTHROPIC_API_KEY` | Your Anthropic API key, for the agent's model |
+| `LGND_GEO_API_KEY` | Your LGND Geo API key, from the [developer portal](https://geo.lgnd.ai/portal) |
+| `ANTHROPIC_API_KEY` | Your Anthropic API key, for the agent sections |
 | `LGND_GEO_MCP_URL` | Optional: another LGND Geo MCP server than `https://geo.lgnd.ai/mcp` |

@@ -14,7 +14,12 @@ import asyncio
 import base64
 import html
 import math
+import os
 import time
+import urllib.error
+import urllib.parse
+import urllib.request
+from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
@@ -128,7 +133,7 @@ CSS = """
 .geo-dots i:nth-child(2){animation-delay:.2s} .geo-dots i:nth-child(3){animation-delay:.4s}
 .geo-line { font-size: 13px; } .geo-result { color: var(--muted); font-size: 12px; } .geo-err { color: var(--rejected); font-size: 12px; white-space: pre-wrap; }
 .geo-says + .geo-did { padding-top: 6px; border-top: 1px solid var(--line); }
-.geo-finding { display:grid; grid-template-columns: auto 1fr; gap: 8px; padding: 8px 9px; border-radius: 8px; font-size: 12.5px; border: 1px solid rgba(251,191,36,.4); background: rgba(251,191,36,.08); }
+.geo-finding { display:grid; grid-template-columns: auto 1fr auto; gap: 8px; padding: 8px 9px; border-radius: 8px; font-size: 12.5px; border: 1px solid rgba(251,191,36,.4); background: rgba(251,191,36,.08); }
 .geo-finding.ok { border-color: rgba(52,211,153,.35); background: rgba(52,211,153,.08); }
 .geo-finding.rejected { border-color: rgba(248,113,113,.4); background: rgba(248,113,113,.08); }
 .geo-fn { display:inline-flex; align-items:center; justify-content:center; width: 18px; height: 18px; border-radius: 50%; background: var(--checking); color: var(--bg); font: 700 10px var(--mono); margin-top: 2px; }
@@ -137,6 +142,8 @@ CSS = """
 .geo-fk { display:block; font-size: 10px; font-weight: 600; letter-spacing: .05em; text-transform: uppercase; color: var(--checking); }
 .geo-finding.ok .geo-fk { color: var(--finding); } .geo-finding.rejected .geo-fk { color: var(--rejected); }
 .geo-fc { display:block; margin-top: 4px; color: var(--faint); font-size: 11.5px; }
+.geo-shots { display:flex; flex-wrap:wrap; gap: 3px; max-width: 94px; align-content:flex-start; }
+.geo-pop img { display:inline-block; }
 .geo-answer { font-size: 13.5px; line-height: 1.62; color: #cbd5e1; }
 .geo-answer p { margin: 0 0 10px; } .geo-answer p:last-child { margin-bottom: 0; }
 .geo-answer > p:first-child { font-size: 15px; font-weight: 500; color: #fff; }
@@ -389,6 +396,56 @@ def record_label(r: dict) -> str:
     return f"<div class='geo-pop'><b>{esc(head)}</b>{esc(' · '.join(bits))}</div>"
 
 
+# ----------------------------------------------------------------------------- chip images
+
+GEO_API_URL = os.environ.get("LGND_GEO_API_URL", "https://geo.lgnd.ai/api")
+_images: dict[str, tuple[bytes, str] | None] = {}
+
+
+def thumbnail(node: str) -> tuple[bytes, str] | None:
+    """The image of an observation or cell from the Geo API (`GET /v1/imagery?node=...`), with its
+    media type, or None when the node has no imagery. Sent with the API key; cached per node."""
+    if node not in _images:
+        url = f"{GEO_API_URL}/v1/imagery?{urllib.parse.urlencode({'node': node})}"
+        request = urllib.request.Request(
+            url, headers={"Authorization": f"Bearer {os.environ.get('LGND_GEO_API_KEY', '')}"}
+        )
+        try:
+            with urllib.request.urlopen(request, timeout=60) as response:
+                _images[node] = (response.read(), response.headers.get("Content-Type", "image/png"))
+        except (urllib.error.HTTPError, urllib.error.URLError, TimeoutError):
+            _images[node] = None
+    return _images[node]
+
+
+def prefetch(nodes: list[str]) -> None:
+    """Fetch the images of `nodes` not seen before, eight at a time."""
+    missing = [n for n in dict.fromkeys(nodes) if n not in _images]
+    if missing:
+        with ThreadPoolExecutor(max_workers=8) as pool:
+            list(pool.map(thumbnail, missing))
+
+
+def image_tag(node: str, size: int, style: str = "") -> str:
+    """An <img> of a node's image as a data URI, or '' while it is not loaded or has none."""
+    image = _images.get(node)
+    if not image:
+        return ""
+    data, media_type = image
+    return (
+        f"<img src='data:{media_type};base64,{base64.b64encode(data).decode()}' "
+        f"style='width:{size}px;height:{size}px;object-fit:cover;border-radius:5px;{style}' title='{html.escape(node)}'>"
+    )
+
+
+def sides(node: str) -> list[str]:
+    """The observation ids a finding's node shows: a change's two sides, else the node itself."""
+    if ">" in node:
+        first, second = node.split(">", 1)
+        return [first, f"{first.split('/')[0]}/{second}"]
+    return [node]
+
+
 # ----------------------------------------------------------------------------- the conversation
 
 
@@ -400,6 +457,7 @@ class Finding:
     verdict: str | None = None
     supported: list[str] = field(default_factory=list)
     rejected: list[tuple[str, str]] = field(default_factory=list)
+    pictured: list[str] = field(default_factory=list)  # the nodes whose images the card shows
 
     @property
     def state(self) -> str:
@@ -471,6 +529,7 @@ class LiveMap:
         self.trail = LayerGroup()
         self.view = LayerGroup()
         self.pins = LayerGroup()
+        self.popups: dict[tuple[int, str], W.HTML] = {}  # (finding, node) -> its pin's popup
         for g in (self.trail, self.view, self.pins):
             self.map.add(g)
         self.caption = W.HTML()
@@ -495,6 +554,7 @@ class LiveMap:
     def reset(self):
         for g in (self.trail, self.view, self.pins):
             g.clear_layers()
+        self.popups.clear()
         self._draw_outline()
         self.map.center, self.map.zoom = (39.0, -98.0), 4
         self.say("Ask a question.", "")
@@ -559,10 +619,24 @@ class LiveMap:
         state = "rejected" if rejected else finding.state
         kind = " place" if finding.kind == "place" else ""
         icon = DivIcon(html=f"<div class='geo-pin {state}{kind}'>{finding.n}</div>", icon_size=[24, 24], icon_anchor=[12, 12])
-        what = f"<div class='geo-pop-f'>{esc(node)}" + (f" · shows: {esc(shows)}" if shows else "") + "</div>"
-        label = "Rejected" if rejected else (KIND_LABEL.get(finding.kind, "") if finding.verdict else "Checking")
-        pop = W.HTML(f"<div class='geo-pop'><b>{finding.n} · {esc(label)}</b>{esc(finding.text)}{what}</div>")
+        pop = W.HTML(self.popup_html(finding, node, rejected, shows))
+        self.popups[(finding.n, node)] = pop
         self.pins.add(Marker(location=at, icon=icon, draggable=False, popup=pop))
+
+    def popup_html(self, finding: Finding, node: str, rejected: bool, shows: str = "") -> str:
+        """A pin's popup: the finding, this place's image (before and after for a change), and
+        what the image showed when the check rejected it."""
+        label = "Rejected" if rejected else (KIND_LABEL.get(finding.kind, "") if finding.verdict else "Checking")
+        pictures = "".join(image_tag(n, 130, "margin:6px 4px 0 0") for n in sides(node))
+        what = f"<div class='geo-pop-f'>{esc(node)}" + (f" · shows: {esc(shows)}" if shows else "") + "</div>"
+        return f"<div class='geo-pop'><b>{finding.n} · {esc(label)}</b>{esc(finding.text)}{what}{pictures}</div>"
+
+    def refresh_popups(self, finding: Finding):
+        """Fill in the images of a finding's pins once they are fetched."""
+        for (n, node), pop in self.popups.items():
+            if n == finding.n:
+                rejected = node in dict(finding.rejected)
+                pop.value = self.popup_html(finding, node, rejected, dict(finding.rejected).get(node, ""))
 
 
 # ----------------------------------------------------------------------------- the app
@@ -814,11 +888,20 @@ class GeoChat:
             spots = [p for p in (self._position(n) for n in f.supported + [n for n, _ in f.rejected]) if p]
             if spots:
                 self.map.fit(spots)
+            f.pictured = (f.supported or [n for n, _ in f.rejected])[:4]
+            asyncio.ensure_future(self._picture(f))
             return
         if isinstance(content, dict):
             rows = list(located(content))
             if rows:
                 self.map.show(beat.tool or "", rows)
+
+    async def _picture(self, finding: Finding):
+        """Fetch a finding's images off the event loop, then show them on its card and pins."""
+        nodes = [side for node in finding.pictured for side in sides(node)]
+        await asyncio.to_thread(prefetch, nodes)
+        self.map.refresh_popups(finding)
+        self._render(force=True)
 
     def _position(self, node: str) -> tuple[float, float] | None:
         r = self._seen.get(node)
@@ -878,9 +961,11 @@ class GeoChat:
             kind = KIND_LABEL.get(f.kind, "")
             label = {"ok": kind or "Supported", "rejected": "Not supported", "checking": "Checking"}[f.state]
             n = f.n or "·"
+            shots = "".join(image_tag(side, 44) for node in f.pictured for side in sides(node))
+            pictures = f"<span class='geo-shots'>{shots}</span>" if shots else ""
             parts.append(
                 f"<div class='geo-finding {f.state} {esc(f.kind)}'><span class='geo-fn'>{n}</span>"
-                f"<span><span class='geo-fk'>{esc(label)}</span>{esc(f.text)}<span class='geo-fc'>{esc(f.check_line())}</span></span></div>"
+                f"<span><span class='geo-fk'>{esc(label)}</span>{esc(f.text)}<span class='geo-fc'>{esc(f.check_line())}</span></span>{pictures}</div>"
             )
         return f"<li class='geo-beat {state}'><span class='geo-node'><i></i></span><div class='geo-card'>{''.join(parts)}</div></li>"
 

@@ -4,7 +4,7 @@ version = "0.1.0"
 description = "The October 2026 LGND demo, rebuilt on the LGND Geo agent SDK"
 requires-python = ">=3.13"
 dependencies = [
-    "lgnd-geo-sdk[pydantic-ai]",
+    "lgnd-geo-sdk[pydantic-ai]==0.3.0",
     "pydantic-ai-slim[anthropic]",
     "folium",
     "ipywidgets",
