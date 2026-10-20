@@ -1,5 +1,7 @@
 # Large Earth Observation Models in Action
 
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/EarthLegend/carto-sdsc-workshop-2026/blob/main/LGND_Geo_Agent_Demo.ipynb)
+
 Workshop notebook: Spatial Data Science Conference, New York, October 20, 2026. Noam Rosenthal, LGND.
 
 LGND Geo is an index of geospatial embeddings over NAIP and Sentinel-2 imagery, served as a set of
@@ -29,7 +31,9 @@ and ipyleaflet, no server), `assets/` (the logo).
 
 ## Run it
 
-With [uv](https://docs.astral.sh/uv/):
+**In Colab:** click the badge above. The first cell installs the packages and fetches the helper files; the notebook then asks for your keys.
+
+**Locally**, with [uv](https://docs.astral.sh/uv/):
 
 ```bash
 uv sync
